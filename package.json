@@ -14,8 +14,6 @@
     "@fontsource/roboto": "^5.2.5",
     "@mui/icons-material": "^6.4.6",
     "@mui/material": "^6.4.6",
-    "@nivo/bump": "^0.88.0",
-    "@nivo/core": "^0.88.0",
     "next": "15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -34,5 +32,8 @@
   },
   "overrides": {
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "volta": {
+    "node": "22.14.0"
   }
 }
