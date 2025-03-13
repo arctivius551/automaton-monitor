@@ -25,6 +25,14 @@ export default function Home() {
   // const [data, setData] = useState(initData);
   // const [workbooks, setWorkBooks] = useState(initWorkBooks);
 
+  // function CsvDataToRankData( csv:CsvDataRow ): RankDataPoint{
+  //   const retVal:RankDataPoint = { 
+  //     date: dateStrToUnix(csv.Date), 
+  //     rank: parseInt(csv.Place)
+  //   };
+  //   return retVal;
+  // }
+
   // function loadSheetData( sheetName:string ){
   //   setData(initData);
   //   let series:BumpSerie<BumpDatum,any>[] = [];
