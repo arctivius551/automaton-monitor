@@ -3,7 +3,7 @@
 import { ChangeEvent, useState } from 'react';
 import { WorkBook, utils } from 'xlsx';
 import { Button, Stack, Typography} from '@mui/material';
-import { CloudUpload} from '@mui/icons-material/';
+import { CloudUpload} from '@mui/icons-material';
 import SummaryComponent from '@components/SummaryComponent';
 import ReportDisplay from '@components/ReportDisplay';
 import HiddenInput from '@components/HiddenInput';
