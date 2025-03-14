@@ -1,9 +1,9 @@
 "use client";
 
-import { ChangeEvent, useEffect, useState } from 'react';
+import { ChangeEvent, Fragment, useEffect, useState } from 'react';
 import { WorkBook, utils } from 'xlsx';
-import { Button, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, Typography} from '@mui/material';
-import { CloudUpload} from '@mui/icons-material';
+import { Button, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, TextField, Typography} from '@mui/material';
+import { CloudUpload, ArrowLeft, ArrowRight} from '@mui/icons-material';
 import SummaryComponent from '@components/SummaryComponent';
 import ReportDisplay from '@components/ReportDisplay';
 import HiddenInput from '@components/HiddenInput';
@@ -16,6 +16,7 @@ const initRankedOverall:RankSummary[] = Array.from( "*".repeat(10)).map( (e,i) =
 const initColumn:string = "";
 const initColumns:string[] = [];
 const SummaryDisplayCount = 5;
+const initMinimumDays = 2;
 
 export default function Home() {
 
@@ -25,6 +26,7 @@ export default function Home() {
   const [csvSheets, setCsvSheets]         = useState(initCsvSheets);
   const [columns, setColumns]             = useState(initColumns);
   const [column, setColumn]               = useState(initColumn);
+  const [days, setDays]                  = useState(initMinimumDays);
 
   function loadSheetData( sheetName:string ) {
     console.log('loadSheetData');
@@ -65,8 +67,9 @@ export default function Home() {
           }
       })
     });
+    rankData = rankData.filter( rd => rd.count >= days);
     setRankedOverall(rankData);
-  }, [csvSheets]);
+  }, [csvSheets, days]);
 
   //Update the columns in the select
   useEffect(()=>{
@@ -103,6 +106,23 @@ export default function Home() {
     setSheetNames( wbs.at(0)?.SheetNames.filter( s => !['fights overview', 'Attendance'].includes(s)));
   }
 
+  const handleDecrement = () => {
+    setDays((prevDays) => Math.max(prevDays - 1, 1)); // Ensure days don't go below 1
+  };
+
+  const handleIncrement = () => {
+    setDays((prevDays) =>Math.min( prevDays + 1, csvSheets.length)); //Ensure days don't go above number of loaded sheets
+  };
+
+  const handleMinNumberChange = (event:any) => {
+    let value = parseInt(event.target.value, 10);
+    if( !isNaN(value)){
+      value = value < 1 ? 1 : value;
+      value = value > csvSheets.length ? csvSheets.length : value;
+      setDays( value );
+    }
+  };
+
   return (
     <main className="flex flex-row w-full h-lvh p-1 bg-slate-300">
       <aside id="controls" className='flex flex-col gap-2 pr-2 border-r-4 border-r-black'>
@@ -110,8 +130,8 @@ export default function Home() {
           Upload files<HiddenInput type="file" onChange={handleFileUpload} multiple />
         </Button>
         <Stack spacing={1} direction='column' className='overflow-y-scroll'>
-          { sheetNames && sheetNames.map( sn =>{
-            return <Button data-name={sn} component='button' key={sn} variant='contained' color='secondary' size='small' className='w-full' 
+          { sheetNames && sheetNames.map( (sn,i) =>{
+            return <Button data-name={sn} component='button' key={i} variant='contained' color='secondary' size='small' className='w-full' 
             onClick={sheetButtonClick}>{sn}</Button>
           })}
         </Stack>
@@ -122,8 +142,19 @@ export default function Home() {
 
           <article id="summary" className='flex flex-col h-full min-w-60 items-center border-r-black border-r-2 px-2'>
             <Typography variant='h4' className='w-fit text-xl'>Summary</Typography>
-            <SummaryComponent players={rankedOverall.slice(0,SummaryDisplayCount)} style="success" title={`Top ${SummaryDisplayCount} Players`}   />
-            <SummaryComponent players={rankedOverall.slice(-SummaryDisplayCount)}  style="danger"  title={`Bottom ${SummaryDisplayCount} Players`}/>
+            {csvSheets && column && (<Fragment>
+              <Stack direction="row" alignItems="center" spacing={1} justifyContent={'space-between'}>
+                <Typography>Min Days</Typography>
+                <IconButton onClick={handleDecrement}> <ArrowLeft /> </IconButton>
+                <input type="number" value={days} onChange={handleMinNumberChange} min={1} max={ csvSheets.length }
+                  style={{ width: '50px', textAlign: 'center' }}
+                />
+                <IconButton onClick={handleIncrement}> <ArrowRight /> </IconButton>
+              </Stack>
+              <SummaryComponent players={rankedOverall.slice(0,SummaryDisplayCount)} style="success" title={`Top ${SummaryDisplayCount} Players`}   />
+              <SummaryComponent players={rankedOverall.slice(-SummaryDisplayCount)}  style="danger"  title={`Bottom ${SummaryDisplayCount} Players`}/>
+              
+            </Fragment>)}
           </article>
 
           <article id="days" className='flex flex-col w-full h-full pl-2 bg-white'>
