@@ -69,7 +69,7 @@ export default function Home() {
     });
     rankData = rankData.filter( rd => rd.count >= days);
     setRankedOverall(rankData);
-  }, [csvSheets, days]);
+  }, [csvSheets, days, column]);
 
   //Update the columns in the select
   useEffect(()=>{
