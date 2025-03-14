@@ -1,15 +1,21 @@
 interface CsvDataRow {
     Date:string;
     Name:string;
-    Place:string;
     Profession:string;
+    [key:string]: string|number|boolean;
   }
 
 interface CsvSheet {
     name:string;
     date:number;
-    rows:CsvDataRow[];
+    data:any[];
 }
+
+interface RankSummary {
+    player:string;
+    ranks:number[];
+    count:number;
+  }
 
 interface RankDataPoint {
     date: number,

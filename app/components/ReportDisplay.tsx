@@ -1,24 +1,37 @@
-import { Stack, Typography, List, ListItem, Chip } from "@mui/material";
+import { Stack, Typography, List, ListItem, Chip, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 import { timeConverter, makeSafeForCSS } from "@util/convert";
-import { Fragment } from "react";
+import { Fragment, useState, useEffect, ReactElement } from "react";
 
 interface ReportDisplayProps {
-    sheets: CsvSheet[]
+    sheets: CsvSheet[];
+    column: string;
+    columnSelector: ReactElement;
 }
+
+const toggleStyles = ['bg-red-500'];
 
 export default function ReportDisplay( props: ReportDisplayProps) {
 
-    const toggleStyles = ['bg-red-500'];
+    const [sheets, setSheets] = useState( props.sheets );
+    const [column, setColumn] = useState( props.column );
+
+    useEffect( () => {
+        setSheets(props.sheets);
+    }, [props.sheets] );
+
+    useEffect( ()=> {
+        setColumn(props.column);
+    }, [props.column]);
 
     function toggleClassesForPlayer( element:HTMLLIElement, toggleOn:boolean, tailwindClasses:string[]){
         const playerClassName = element.classList.values().find( c => c.startsWith('__player') );
         document.querySelectorAll( `.${playerClassName}` ).forEach( element => {
             tailwindClasses.forEach( twc => {
-            if( toggleOn ){
-                element.classList.add(twc)
-            }else{
-                element.classList.remove(twc);
-            }
+                if( toggleOn ){
+                    element.classList.add(twc)
+                }else{
+                    element.classList.remove(twc);
+                }
             })
         })
     }
@@ -32,27 +45,31 @@ export default function ReportDisplay( props: ReportDisplayProps) {
     }
 
     return <Fragment>
-        <Typography variant='h4' className='w-fit text-xl'>Report {props.sheets[0]?.name || "[No Report Selected]"}</Typography>
-        <Stack direction={'row'}>
-            { props.sheets && props.sheets.map( (sheet:CsvSheet) =>
-            <div key={sheet.date} className='bg-blue-100 border border-blue-300 rounded min-w-60'>
-                <Typography sx={{ m: 0, p: 0}} align='center' className=''>{timeConverter(sheet.date)}</Typography>
-                <List className='h-auto overflow-y-auto max-h-svh'>
-                {sheet.rows.map( (row:CsvDataRow) =>
-                    <ListItem dense={true} component={'li'}
-                    id={`${sheet.date}${makeSafeForCSS(row?.Name, 'player')}-${row.Place}`} 
-                    key={`${sheet.date}${makeSafeForCSS(row?.Name,'player')}-${row.Place}`}  
-                    className={`${ makeSafeForCSS(row.Name, 'player')}`} 
-                    onMouseEnter={playerMouseEnterHandler}
-                    onMouseLeave={playerMouseLeaveHandler}>
-                        <Chip size="small" variant="outlined" sx={{ minWidth: '0px', mr: 1}} label={row.Place} />
-                        <Typography variant='body2' component={'span'}>{row.Name}</Typography>
-                    <hr/>
-                    </ListItem>
-                )}
-            </List>
-            </div>
-        )}
+        <Stack direction='row' className="w-full">
+            <Typography variant='h4' className='text-xl w-1/2'>Report {sheets[0]?.name || "[No Report Selected]"}</Typography>
+            {sheets && sheets.length > 0 ? props.columnSelector : <Fragment/>}
         </Stack>
-        </Fragment>
+        <Stack direction={'row'}>
+            { sheets && props.sheets.map( (sheet:CsvSheet) => {
+                console.log( 'sheet', column, sheet);
+                return <div key={sheet.date.toString()} className='bg-blue-100 border border-blue-300 rounded min-w-48'>
+                    <Typography sx={{ m: 0, p: 0}} align='center' className=''>{timeConverter(sheet.date)}</Typography>
+                    <List dense={true} className='h-auto overflow-y-auto max-h-svh'>
+                        {sheet.data.map( (row:CsvDataRow, index:number) => {
+                            console.log( 'row', row);
+                            const playerClass = makeSafeForCSS(row.Name, 'player');
+                            const playerId = `${sheet.date}${playerClass}-${index}`;
+                            return <ListItem dense={true} sx={{ p: 0}} id={playerId} key={playerId + `${Math.random()}`} className={playerClass} 
+                                onMouseEnter={playerMouseEnterHandler}
+                                onMouseLeave={playerMouseLeaveHandler}>
+                                    <Chip size="small" variant="outlined" sx={{ minWidth: '0px', mr: 1}} label={parseFloat((row[column] as number)?.toFixed(2))} />
+                                    <Typography variant='body2' component={'span'}>{row.Name}</Typography>
+                                <hr/>
+                            </ListItem>;
+                        })}
+                    </List>
+                </div>
+            })}
+        </Stack>
+    </Fragment>
 }

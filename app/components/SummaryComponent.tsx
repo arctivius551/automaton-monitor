@@ -3,7 +3,7 @@ import { Chip, List, ListItem, ListItemText, styled, Typography } from '@mui/mat
 
 interface SummaryProps {
     title: string;
-    players: string[];
+    players: RankSummary[];
     style: "success" | "warning" | "danger" | "info" | "default";
     
 }
@@ -24,14 +24,14 @@ export default function SummaryComponent (props:SummaryProps) {
         <div className={`flex flex-col align-center w-full mx-2 mb-2 rounded rounded-b-none ${applyStyleClasses()}`}>
             <Typography align='center'>{props.title}</Typography>
             <List dense={true}>
-                {props.players.map( (el,i)=>
+                {props.players.map( (player,i)=>
                     <ListItem dense={true} alignItems="flex-start" key={i}>
                         <ListItemText  
-                            primary={<Typography>{el}</Typography>}
+                            primary={<Typography>{player.player}</Typography>}
                             secondary={
                                 <Fragment>
-                                    <Chip component={'span'} size='small' variant="outlined" label="Avg Rank 1.32" />
-                                    <Chip component={'span'} size='small' variant="outlined" label="Days 5" />
+                                    <Chip component={'span'} size='small' variant="outlined" label={`Avg Rank ${(player.ranks.reduce( (acc,cur) => acc + cur) / player.count).toFixed(2)}`} />
+                                    <Chip component={'span'} size='small' variant="outlined" label={`Days ${player.count}`} />
                                 </Fragment>}
                         />
                     </ListItem>

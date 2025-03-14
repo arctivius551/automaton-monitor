@@ -1,49 +1,86 @@
 "use client";
 
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { WorkBook, utils } from 'xlsx';
-import { Button, Stack, Typography} from '@mui/material';
+import { Button, FormControl, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, Typography} from '@mui/material';
 import { CloudUpload} from '@mui/icons-material';
 import SummaryComponent from '@components/SummaryComponent';
 import ReportDisplay from '@components/ReportDisplay';
 import HiddenInput from '@components/HiddenInput';
 import { fileToWorkbook, dateStrToUnix } from '@util/convert';
 
-const testList = ['Arctivius Feywild','Capt Scaldy Balz','Jinx Storm','Maj Ravenwhisper','Agent Sandiego'];
-
 const initWorkBooks: WorkBook[] = [];
 const initCsvSheets:CsvSheet[]  = [];
 const initSheetNames:string[] | undefined = [];
+const initRankedOverall:RankSummary[] = Array.from( "*".repeat(10)).map( (e,i) => ({ player: e + i, ranks: [i], count: 1} as RankSummary));
+const initColumn:string = "";
+const initColumns:string[] = [];
+const SummaryDisplayCount = 5;
 
 export default function Home() {
 
-  const [workbooks, setWorkBooks]   = useState(initWorkBooks);
-  const [sheetNames, setSheetNames] = useState(initSheetNames);
-  const [csvSheets, setCsvSheets]   = useState(initCsvSheets);
+  const [rankedOverall, setRankedOverall] = useState(initRankedOverall);
+  const [workbooks, setWorkBooks]         = useState(initWorkBooks);
+  const [sheetNames, setSheetNames]       = useState(initSheetNames);
+  const [csvSheets, setCsvSheets]         = useState(initCsvSheets);
+  const [columns, setColumns]             = useState(initColumns);
+  const [column, setColumn]               = useState(initColumn);
 
   function loadSheetData( sheetName:string ) {
-
-    setCsvSheets( workbooks.map( (wb:WorkBook) => {
-      let dataRows = (utils.sheet_to_json( wb.Sheets[sheetName] ) as CsvDataRow[])
-        .map( (s:CsvDataRow) => {
-        const indicator = "_{{"
-        if( s.Name.includes( indicator )){
-          const match = s.Name.match(/{{([^}]*)}}/);
-          s.Profession = match ? match[1] : '';
-          s.Name = s.Name.substring( 0, s.Name.indexOf( indicator ));
+    console.log('loadSheetData');
+    console.log( csvSheets );
+    const loaded = workbooks.map( (wb:WorkBook) =>{
+      const sheetData:any[] = utils.sheet_to_json( wb.Sheets[sheetName] );
+      sheetData?.forEach( row => {
+        const indicator = "_{{";
+        if( row.Name.includes( indicator )){
+          const match = row.Name.match(/{{([^}]*)}}/);
+          row.Profession = match ? match[1] : '';
+          row.Name = row.Name.substring( 0, row.Name.indexOf( indicator ));
         }
-        return s;
       });
-
       return {
         name: sheetName,
-        date: dateStrToUnix(dataRows[0].Date),
-        rows: dataRows,
-      };
-    }));
-
-    console.log( csvSheets );
+        date: dateStrToUnix(sheetData[0]?.Date),
+        data: sheetData
+      } as CsvSheet;
+    });
+    console.log('loaded', loaded );
+    setCsvSheets(loaded);
+    
+    console.log( 'csvSheets',csvSheets );
   }
+
+  //Update the Summary Values on selecting new data set or 
+  useEffect(()=>{
+    let rankData:RankSummary[] = [];
+    csvSheets.forEach( sheet => {
+      sheet.data.forEach( row =>{
+          let player = rankData.find( p => p.player === row.Name );
+          if( player ){
+            player.ranks.push( row[column] );
+            player.count += 1;
+          }else{
+            rankData.push( { player:row.Name, ranks: [row[column]], count: 1 } as RankSummary)
+          }
+      })
+    });
+    setRankedOverall(rankData);
+  }, [csvSheets]);
+
+  //Update the columns in the select
+  useEffect(()=>{
+      if( csvSheets && csvSheets[0]?.data ){
+          const cols = Object.entries(csvSheets[0].data[0] ).filter( ([k,v]) => typeof(v) === 'number' ).map( ([k,v]) => k );
+          setColumns( cols );
+          setColumn( cols[0] );
+      }
+  }, [csvSheets]);
+
+  function handleChange(event:SelectChangeEvent<string>) {
+      setColumn(event.target.value);
+  }
+
 
   function sheetButtonClick( event: React.MouseEvent<HTMLButtonElement> ){
     event.preventDefault();
@@ -67,12 +104,12 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-row w-full h-lvh p-1">
-      <aside id="controls" className='flex flex-col gap-2'>
-        <Button component="label" className='w-72' variant="contained" tabIndex={-1} startIcon={<CloudUpload />}>
+    <main className="flex flex-row w-full h-lvh p-1 bg-slate-300">
+      <aside id="controls" className='flex flex-col gap-2 pr-2 border-r-4 border-r-black'>
+        <Button size='large' component="label" className='w-72' variant="contained" tabIndex={-1} startIcon={<CloudUpload />}>
           Upload files<HiddenInput type="file" onChange={handleFileUpload} multiple />
         </Button>
-        <Stack spacing={1} direction='column' className='overflow-scroll border-r-4 border-r-black '>
+        <Stack spacing={1} direction='column' className='overflow-y-scroll'>
           { sheetNames && sheetNames.map( sn =>{
             return <Button data-name={sn} component='button' key={sn} variant='contained' color='secondary' size='small' className='w-full' 
             onClick={sheetButtonClick}>{sn}</Button>
@@ -80,15 +117,23 @@ export default function Home() {
         </Stack>
       </aside>
 
-      <section className='w-full pl-3'>
-        <div className='flex flex-row gap-2'>
-          <article id="summary" className='flex flex-col min-w-48 items-center'>
+      <section className='w-full h-full'>
+        <div className='flex flex-row h-full w-full'>
+
+          <article id="summary" className='flex flex-col h-full min-w-60 items-center border-r-black border-r-2 px-2'>
             <Typography variant='h4' className='w-fit text-xl'>Summary</Typography>
-            <SummaryComponent players={testList} style="success" title={`Top ${testList.length} Players`}   />
-            <SummaryComponent players={testList} style="danger"  title={`Bottom ${testList.length} Players`}/>
+            <SummaryComponent players={rankedOverall.slice(0,SummaryDisplayCount)} style="success" title={`Top ${SummaryDisplayCount} Players`}   />
+            <SummaryComponent players={rankedOverall.slice(-SummaryDisplayCount)}  style="danger"  title={`Bottom ${SummaryDisplayCount} Players`}/>
           </article>
-          <article id="days" className='flex flex-col'>
-            <ReportDisplay sheets={csvSheets} />
+
+          <article id="days" className='flex flex-col w-full h-full pl-2 bg-white'>
+            <ReportDisplay sheets={csvSheets} column={column} columnSelector={
+              <FormControl size='small' fullWidth>
+                  <InputLabel id="column-select-label">Column</InputLabel>
+                  <Select labelId="column-select-label" id="column-select" className='w-1/4' value={column} onChange={handleChange}>
+                      {columns.map((col,id) => <MenuItem key={id} value={col}>{col}</MenuItem> )}
+                  </Select>
+              </FormControl>}/>
           </article>
         </div>
       </section>
