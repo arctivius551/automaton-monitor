@@ -2,5 +2,7 @@
 import { Link, Typography} from '@mui/material';
 
 export default function Home() {
-  return <Typography>Only page so far is <Link href="/ranking">/ranking</Link></Typography>
+  return (<div>
+    <Typography>Only page so far is <Link href="/ranking">/ranking</Link></Typography>
+  </div>);
 }

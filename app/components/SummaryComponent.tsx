@@ -1,3 +1,5 @@
+"use client";
+
 import { Fragment } from 'react';
 import { Chip, List, ListItem, ListItemText, styled, Typography } from '@mui/material';
 
