@@ -1,6 +1,6 @@
 "use client";
 
-import { Stack, Typography, List, ListItem, Chip, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
+import { Stack, Typography, List, ListItem, Chip } from "@mui/material";
 import { timeConverter, makeSafeForCSS } from "@util/convert";
 import { Fragment, useState, useEffect, ReactElement } from "react";
 
@@ -48,7 +48,7 @@ export default function ReportDisplay( props: ReportDisplayProps) {
 
     return <Fragment>
         <Stack direction='row' className="w-full">
-            <Typography variant='h4' className='text-xl w-1/2'>Report {sheets[0]?.name || "[No Report Selected]"}</Typography>
+            <Typography variant='h4' className='text-xl w-full'>Report {sheets[0]?.name || "[No Report Selected]"}</Typography>
             {sheets && sheets.length > 0 ? props.columnSelector : <Fragment/>}
         </Stack>
         <Stack direction={'row'}>
