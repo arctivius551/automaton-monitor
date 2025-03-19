@@ -13,24 +13,18 @@ import ReportDisplay from '@components/ReportDisplay';
 import HiddenInput from '@components/HiddenInput';
 import SheetSelector from '@components/SheetSelector';
 
-const initWorkBooks: WorkBook[] = [];
-const initCsvSheets:CsvSheet[]  = [];
-const initSheetNames:string[] | undefined = [];
-const initRankedOverall:RankSummary[] = [];
-const initColumn:string = "";
-const initColumns:string[] = [];
 const SummaryDisplayCount = 5;
 const initMinimumDays = 2;
 
 export default function Home() {
 
   const [players, setPlayers]             = useState([] as Player[]);
-  const [rankedOverall, setRankedOverall] = useState(initRankedOverall);
-  const [workbooks, setWorkBooks]         = useState(initWorkBooks);
-  const [sheetNames, setSheetNames]       = useState(initSheetNames);
-  const [csvSheets, setCsvSheets]         = useState(initCsvSheets);
-  const [columns, setColumns]             = useState(initColumns);
-  const [column, setColumn]               = useState(initColumn);
+  const [rankedOverall, setRankedOverall] = useState([] as RankSummary[]);
+  const [workbooks, setWorkBooks]         = useState([] as WorkBook[]);
+  const [sheetNames, setSheetNames]       = useState([] as string[]);
+  const [csvSheets, setCsvSheets]         = useState([] as CsvSheet[]);
+  const [columns, setColumns]             = useState([] as string[]);
+  const [column, setColumn]               = useState('');
   const [days, setDays]                   = useState(initMinimumDays);
 
   //Update the Summary Values on selecting new data set or 
@@ -51,7 +45,7 @@ export default function Home() {
     });
     rankData = rankData.filter( rd => rd.count >= days);
     setRankedOverall(rankData);
-  }, [csvSheets, days, column]);
+  }, [csvSheets, days, column, players]);
 
   //Update the columns in the select
   useEffect(()=>{
@@ -167,7 +161,7 @@ export default function Home() {
         </Button>
         <SheetSelector sheetNames={sheetNames} sheetButtonClickHandler={sheetButtonClick} />
       </aside>
-      
+
       <section className='w-full h-full'>
         <div className='flex flex-row h-full w-full'>
 
