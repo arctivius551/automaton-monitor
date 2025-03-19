@@ -3,15 +3,13 @@
 import { Stack, Typography, List, ListItem, Chip } from "@mui/material";
 import { timeConverter, makeSafeForCSS } from "@util/convert";
 import { Fragment, useState, useEffect, ReactElement } from "react";
+import { highlightPlayerMouseEnterHandler, highlightPlayerMouseLeaveHandler } from "@components/highlightCharacter";
 
 interface ReportDisplayProps {
     sheets: CsvSheet[];
     column: string;
     columnSelector: ReactElement;
 }
-
-const toggleStyles = ['bg-red-500'];
-
 export default function ReportDisplay( props: ReportDisplayProps) {
 
     const [sheets, setSheets] = useState( props.sheets );
@@ -24,27 +22,6 @@ export default function ReportDisplay( props: ReportDisplayProps) {
     useEffect( ()=> {
         setColumn(props.column);
     }, [props.column]);
-
-    function toggleClassesForPlayer( element:HTMLLIElement, toggleOn:boolean, tailwindClasses:string[]){
-        const playerClassName = element.classList.values().find( c => c.startsWith('__player') );
-        document.querySelectorAll( `.${playerClassName}` ).forEach( element => {
-            tailwindClasses.forEach( twc => {
-                if( toggleOn ){
-                    element.classList.add(twc)
-                }else{
-                    element.classList.remove(twc);
-                }
-            })
-        })
-    }
-    
-    function playerMouseEnterHandler( event: React.MouseEvent<HTMLLIElement>){
-        toggleClassesForPlayer( event.currentTarget, true, toggleStyles );
-    }
-
-    function playerMouseLeaveHandler( event: React.MouseEvent<HTMLLIElement>){
-        toggleClassesForPlayer( event.currentTarget, false, toggleStyles);
-    }
 
     return <Fragment>
         <Stack direction='row' className="w-full">
@@ -60,8 +37,8 @@ export default function ReportDisplay( props: ReportDisplayProps) {
                             const playerClass = makeSafeForCSS(row.Name, 'player');
                             const playerId = `${sheet.date}${playerClass}-${index}`;
                             return <ListItem dense={true} sx={{ p: 0}} id={playerId} key={index || Math.random()} className={playerClass} 
-                                onMouseEnter={playerMouseEnterHandler}
-                                onMouseLeave={playerMouseLeaveHandler}>
+                                onMouseEnter={highlightPlayerMouseEnterHandler}
+                                onMouseLeave={highlightPlayerMouseLeaveHandler}>
                                     <Chip size="small" variant="outlined" sx={{ minWidth: '0px', mr: 1}} label={parseFloat((row[column] as number)?.toFixed(2))} />
                                     <Typography variant='body2' component={'span'}>{row.Name}</Typography>
                                 <hr/>

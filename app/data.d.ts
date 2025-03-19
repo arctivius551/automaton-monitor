@@ -1,3 +1,14 @@
+interface Player {
+  id: string;
+  characters:Character[];
+}
+
+interface Character {
+  name: string;
+  profession: string;
+  id: string;
+}
+
 interface CsvDataRow {
     Date:string;
     Name:string;
@@ -12,7 +23,8 @@ interface CsvSheet {
 }
 
 interface RankSummary {
-    player:string;
+    name:string;
+    player:Player
     ranks:number[];
     count:number;
   }

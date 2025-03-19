@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
 
 import { ChangeEvent, Fragment, useEffect, useState } from 'react';
-import { WorkBook, utils } from 'xlsx';
+import { WorkBook, WorkSheet, utils } from 'xlsx';
 import { Button, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, Typography} from '@mui/material';
 import { CloudUpload, ArrowLeft, ArrowRight} from '@mui/icons-material';
 import { fileToWorkbook, dateStrToUnix } from '@util/convert';
@@ -16,7 +16,7 @@ import SheetSelector from '@components/SheetSelector';
 const initWorkBooks: WorkBook[] = [];
 const initCsvSheets:CsvSheet[]  = [];
 const initSheetNames:string[] | undefined = [];
-const initRankedOverall:RankSummary[] = Array.from( "*".repeat(10)).map( (e,i) => ({ player: e + i, ranks: [i], count: 1} as RankSummary));
+const initRankedOverall:RankSummary[] = [];
 const initColumn:string = "";
 const initColumns:string[] = [];
 const SummaryDisplayCount = 5;
@@ -24,6 +24,7 @@ const initMinimumDays = 2;
 
 export default function Home() {
 
+  const [players, setPlayers]             = useState([] as Player[]);
   const [rankedOverall, setRankedOverall] = useState(initRankedOverall);
   const [workbooks, setWorkBooks]         = useState(initWorkBooks);
   const [sheetNames, setSheetNames]       = useState(initSheetNames);
@@ -31,6 +32,68 @@ export default function Home() {
   const [columns, setColumns]             = useState(initColumns);
   const [column, setColumn]               = useState(initColumn);
   const [days, setDays]                   = useState(initMinimumDays);
+
+  //Update the Summary Values on selecting new data set or 
+  useEffect(()=>{
+    let rankData:RankSummary[] = [];
+    csvSheets.forEach( sheet => {
+      sheet.data.forEach( row =>{
+          const name = row.Name;
+          let summary = rankData.find( s => s.name === name );
+          const player = players.find( p => p.characters.find( c => c.name === name ));
+          if( summary ){
+            summary.ranks.push( row[column] );
+            summary.count += 1;
+          }else{
+            rankData.push( { name, player, ranks: [row[column]], count: 1 } as RankSummary)
+          }
+      })
+    });
+    rankData = rankData.filter( rd => rd.count >= days);
+    setRankedOverall(rankData);
+  }, [csvSheets, days, column]);
+
+  //Update the columns in the select
+  useEffect(()=>{
+      if( csvSheets && csvSheets[0]?.data ){
+          const cols = Object.entries(csvSheets[0].data[0] ).filter( ([k,v]) => typeof(v) === 'number' ).map( ([k,v]) => k );
+          setColumns( cols );
+          setColumn( cols[0] );
+      }
+  }, [csvSheets]);
+
+  //Update the player data
+  useEffect( ()=> {
+    if( workbooks ){
+      let players:Player[] = [];
+      workbooks.forEach( (wb:WorkBook) => {
+        const attendanceWS:WorkSheet = wb.Sheets['DPSStats'];
+        const sheetData:any[] = utils.sheet_to_json( attendanceWS );
+        sheetData.forEach( row => {
+
+          const id = row['Account'];
+          const name = row['Name'];
+          const profession = row['Profession'];
+
+          const character = ({ name, id, profession } as Character);
+
+          let player = players.find( p => p.id === id );
+          if( !player ) {
+            player = ({ id , characters: [ character] } as Player);
+            players.push( player );
+          }
+          else{
+            if( !player.characters.find( c => c.name === name)) {
+              player.characters.push( character );
+            }
+          }
+        });
+      });
+      
+      setPlayers( players );
+
+    }
+  }, [workbooks] );
 
   function loadSheetData( sheetName:string ) {
     const loaded = workbooks.map( (wb:WorkBook) =>{
@@ -51,33 +114,6 @@ export default function Home() {
     });
     setCsvSheets(loaded);
   }
-
-  //Update the Summary Values on selecting new data set or 
-  useEffect(()=>{
-    let rankData:RankSummary[] = [];
-    csvSheets.forEach( sheet => {
-      sheet.data.forEach( row =>{
-          let player = rankData.find( p => p.player === row.Name );
-          if( player ){
-            player.ranks.push( row[column] );
-            player.count += 1;
-          }else{
-            rankData.push( { player:row.Name, ranks: [row[column]], count: 1 } as RankSummary)
-          }
-      })
-    });
-    rankData = rankData.filter( rd => rd.count >= days);
-    setRankedOverall(rankData);
-  }, [csvSheets, days, column]);
-
-  //Update the columns in the select
-  useEffect(()=>{
-      if( csvSheets && csvSheets[0]?.data ){
-          const cols = Object.entries(csvSheets[0].data[0] ).filter( ([k,v]) => typeof(v) === 'number' ).map( ([k,v]) => k );
-          setColumns( cols );
-          setColumn( cols[0] );
-      }
-  }, [csvSheets]);
 
   function handleChange(event:SelectChangeEvent<string>) {
       setColumn(event.target.value);
@@ -130,10 +166,8 @@ export default function Home() {
           Upload files<HiddenInput type="file" onChange={handleFileUpload} multiple />
         </Button>
         <SheetSelector sheetNames={sheetNames} sheetButtonClickHandler={sheetButtonClick} />
-        
       </aside>
       
-
       <section className='w-full h-full'>
         <div className='flex flex-row h-full w-full'>
 
@@ -148,8 +182,8 @@ export default function Home() {
                 />
                 <IconButton onClick={handleIncrement}> <ArrowRight /> </IconButton>
               </Stack>
-              <SummaryComponent players={rankedOverall.slice(0,SummaryDisplayCount)} style="success" title={`Top ${SummaryDisplayCount} Players`}   />
-              <SummaryComponent players={rankedOverall.slice(-SummaryDisplayCount)}  style="danger"  title={`Bottom ${SummaryDisplayCount} Players`}/>
+              <SummaryComponent summaries={rankedOverall.slice(0,SummaryDisplayCount)} style="success" title={`Top ${SummaryDisplayCount} Players`}   />
+              <SummaryComponent summaries={rankedOverall.slice(-SummaryDisplayCount)}  style="danger"  title={`Bottom ${SummaryDisplayCount} Players`}/>
               
             </Fragment>)}
           </article>

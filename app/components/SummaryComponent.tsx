@@ -1,11 +1,12 @@
 "use client";
 
-import { Fragment } from 'react';
-import { Chip, List, ListItem, ListItemText, styled, Typography } from '@mui/material';
+import { Chip, List, ListItem, ListItemText, Typography, Stack } from '@mui/material';
+import { makeSafeForCSS } from '@util/convert';
+import { highlightPlayerMouseEnterHandler, highlightPlayerMouseLeaveHandler } from "@components/highlightCharacter";
 
 interface SummaryProps {
     title: string;
-    players: RankSummary[];
+    summaries: RankSummary[];
     style: "success" | "warning" | "danger" | "info" | "default";
     
 }
@@ -26,15 +27,19 @@ export default function SummaryComponent (props:SummaryProps) {
         <div className={`flex flex-col align-center w-full mx-2 mb-2 rounded rounded-b-none ${applyStyleClasses()}`}>
             <Typography align='center'>{props.title}</Typography>
             <List dense={true}>
-                {props.players.map( (player,i)=>
-                    <ListItem dense={true} alignItems="flex-start" key={i}>
+                {props.summaries.map( (summary,i)=>
+                    <ListItem key={summary.player?.id + i + Math.random().toString()} dense={true} alignItems="flex-start">
                         <ListItemText  
-                            primary={<Typography>{player.player}</Typography>}
+                            primary={<Typography variant='body1' className={makeSafeForCSS(summary.name, 'player')} onMouseEnter={highlightPlayerMouseEnterHandler}
+                            onMouseLeave={highlightPlayerMouseLeaveHandler}>{summary.name}</Typography>}
                             secondary={
-                                <Fragment>
-                                    <Chip component={'span'} size='small' variant="outlined" label={`Avg Rank ${(player.ranks.reduce( (acc,cur) => acc + cur) / player.count).toFixed(2)}`} />
-                                    <Chip component={'span'} size='small' variant="outlined" label={`Days ${player.count}`} />
-                                </Fragment>}
+                                <Stack component='span' direction='column'>
+                                    <Typography variant='body2' component={'span'}>{summary.player?.id}</Typography>
+                                    <Stack component='span' direction='row' gap={1}>
+                                        <Chip component={'span'} size='small' variant="outlined" label={`Avg Rank ${(summary.ranks.reduce( (acc,cur) => acc + cur) / summary.count).toFixed(2)}`} />
+                                        <Chip component={'span'} size='small' variant="outlined" label={`Days ${summary.count}`} />
+                                    </Stack>
+                                </Stack>}
                         />
                     </ListItem>
                 )}
