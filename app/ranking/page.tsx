@@ -6,39 +6,16 @@ export const fetchCache = "force-no-store";
 import { ChangeEvent, Fragment, useEffect, useState } from 'react';
 import { WorkBook, utils } from 'xlsx';
 import { Button, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, Typography} from '@mui/material';
-import { CloudUpload, ArrowLeft, ArrowRight, Star, Clear} from '@mui/icons-material';
+import { CloudUpload, ArrowLeft, ArrowRight} from '@mui/icons-material';
 import { fileToWorkbook, dateStrToUnix } from '@util/convert';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { yellow } from '@mui/material/colors';
-import { styled } from '@mui/system';
 import SummaryComponent from '@components/SummaryComponent';
 import ReportDisplay from '@components/ReportDisplay';
 import HiddenInput from '@components/HiddenInput';
-
-
-const favoriteTheme = createTheme({
-  palette: {
-    primary: {
-      main: yellow[500],
-      light: yellow[300],
-      dark: yellow[700], 
-    }
-  }
-});
-const StyledStarIcon = styled(Star)({
-  stroke: 'black',
-  strokeWidth: 2
-});
-
-const StyledClear = styled(Clear)({
-  stroke: 'black',
-  strokeWidth: 2
-});
+import SheetSelector from '@components/SheetSelector';
 
 const initWorkBooks: WorkBook[] = [];
 const initCsvSheets:CsvSheet[]  = [];
 const initSheetNames:string[] | undefined = [];
-const initFavorites:string[] | undefined = [];
 const initRankedOverall:RankSummary[] = Array.from( "*".repeat(10)).map( (e,i) => ({ player: e + i, ranks: [i], count: 1} as RankSummary));
 const initColumn:string = "";
 const initColumns:string[] = [];
@@ -50,13 +27,10 @@ export default function Home() {
   const [rankedOverall, setRankedOverall] = useState(initRankedOverall);
   const [workbooks, setWorkBooks]         = useState(initWorkBooks);
   const [sheetNames, setSheetNames]       = useState(initSheetNames);
-  const [favorites, setFavorites]         = useState(initFavorites)
   const [csvSheets, setCsvSheets]         = useState(initCsvSheets);
   const [columns, setColumns]             = useState(initColumns);
   const [column, setColumn]               = useState(initColumn);
   const [days, setDays]                   = useState(initMinimumDays);
-
-  const FavoriteReportLSKey = 'FavoriteReportLSKey';
 
   function loadSheetData( sheetName:string ) {
     const loaded = workbooks.map( (wb:WorkBook) =>{
@@ -105,22 +79,6 @@ export default function Home() {
       }
   }, [csvSheets]);
 
-  useEffect(()=> setFavorites(JSON.parse(localStorage.getItem(FavoriteReportLSKey) ?? '[]')), []);
-  useEffect(()=> localStorage.setItem(FavoriteReportLSKey, JSON.stringify(favorites)),[favorites]);
-
-  function toggleFavorite( event:React.MouseEvent<HTMLButtonElement> ) {
-    event.preventDefault();
-    const name = event.currentTarget.getAttribute('data-name');
-    if( name && favorites ){
-      if( favorites.includes( name )) {
-        setFavorites(favorites.filter( i => i !== name));
-      }
-      else{
-        setFavorites( [...favorites, name].toSorted());
-      }
-    }
-  }
-
   function handleChange(event:SelectChangeEvent<string>) {
       setColumn(event.target.value);
   }
@@ -146,7 +104,6 @@ export default function Home() {
     let sheetNames = wbs.at(0)?.SheetNames.filter( s => !['fights overview', 'Attendance'].includes(s)) || [];
     sheetNames.sort();
     setSheetNames( sheetNames );
-    setFavorites(JSON.parse(localStorage.getItem(FavoriteReportLSKey) ?? '[]' ).toSorted());
   }
 
   const handleDecrement = () => {
@@ -167,40 +124,13 @@ export default function Home() {
   };
 
   return (
-    <main className="flex flex-row w-full h-lvh p-1 bg-slate-300">      
+    <main className="flex flex-row w-full h-lvh p-1 bg-slate-300">
       <aside id="controls" className='flex flex-col gap-2 pr-2 border-r-4 border-r-black min-w-72'>
         <Button size='large' component="label" className='w-full' variant="contained" tabIndex={-1} startIcon={<CloudUpload />}>
           Upload files<HiddenInput type="file" onChange={handleFileUpload} multiple />
         </Button>
-        <ThemeProvider theme={favoriteTheme}>
-          <Stack spacing={1} direction='column' className='overflow-y-scroll'>
-            { sheetNames && sheetNames.length > 0 && favorites && favorites.map( (f,i)=>{
-              return <Stack direction={'row'} key={i}>
-                <IconButton data-name={f} onClick={toggleFavorite} color={ favorites.includes(f) ? 'primary' : 'default' } aria-label="delete">
-                  <StyledClear /> 
-                </IconButton>
-                <Button data-name={f} key={i} variant='contained' color='primary' size='small' className='w-full over' onClick={sheetButtonClick} sx={{
-                      marginX: '10px',
-                      overflowWrap: 'anywhere'
-                    }}>
-                  <Typography variant='subtitle1'>{f}</Typography>
-                </Button>
-              </Stack>
-            })}
-            <hr />
-            { sheetNames && sheetNames.map( (sn,i) =>{
-              return <Stack direction={'row'} key={sn}>
-                  <IconButton data-name={sn} onClick={toggleFavorite} color={ (favorites || []).includes(sn) ? 'primary' : 'default' } aria-label="delete">
-                    <StyledStarIcon /> 
-                  </IconButton>
-                <Button data-name={sn} key={i} variant='contained' color='secondary' size='small' className='w-full' sx={{
-                  marginX: '20px',
-                  overflowWrap: 'anywhere'
-                }} onClick={sheetButtonClick}>{sn}</Button>
-              </Stack>
-            })}
-          </Stack>
-        </ThemeProvider>
+        <SheetSelector sheetNames={sheetNames} sheetButtonClickHandler={sheetButtonClick} />
+        
       </aside>
       
 
