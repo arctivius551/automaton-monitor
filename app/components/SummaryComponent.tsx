@@ -24,12 +24,12 @@ export default function SummaryComponent (props:SummaryProps) {
     }
 
     return( 
-        <div className={`flex flex-col align-center w-full mx-2 mb-2 rounded rounded-b-none ${applyStyleClasses()}`}>
+        <div className={`flex flex-col align-center w-full mx-2 mb-2 rounded rounded-b-none px-2 ${applyStyleClasses()}`}>
             <Typography align='center'>{props.title}</Typography>
-            <List dense={true}>
+            <List dense={true} disablePadding>
                 {props.summaries.map( (summary,i)=>
-                    <ListItem key={summary.player?.id + i + Math.random().toString()} dense={true} alignItems="flex-start">
-                        <ListItemText  
+                    <ListItem key={i} dense={true} alignItems="flex-start" disablePadding>
+                        <ListItemText
                             primary={<Typography variant='body1' className={makeSafeForCSS(summary.name, 'player')} onMouseEnter={highlightPlayerMouseEnterHandler}
                             onMouseLeave={highlightPlayerMouseLeaveHandler}>{summary.name}</Typography>}
                             secondary={

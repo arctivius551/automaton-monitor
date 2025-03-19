@@ -1,4 +1,4 @@
-export const ProffessionColors = {
+export const ProfessionColors = {
     Guardian     : "#72C1D9",
     Dragonhunter : "#72C1D9",
     Firebrand    : "#72C1D9",
@@ -45,3 +45,12 @@ export const ProffessionColors = {
     Harbinger    : "#52A76F"
 };
 
+export function getProfessionColor( profession:string ):string {
+    const prof = Object.entries(ProfessionColors).find( ([k,v]) => k === profession );
+    if( prof ) {
+        return prof[1];
+    } else {
+        return '#888'
+    }
+
+}

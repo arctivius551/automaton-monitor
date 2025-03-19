@@ -183,7 +183,7 @@ export default function Home() {
           </article>
 
           <article id="days" className='flex flex-col w-full h-full pl-2 bg-white'>
-            <ReportDisplay sheets={csvSheets} column={column} columnSelector={
+            <ReportDisplay sheets={csvSheets} players={players} column={column} columnSelector={
               <FormControl fullWidth>
                   <InputLabel id="column-select-label">Column</InputLabel>
                   <Select labelId="column-select-label" id="column-select" className='w-80' value={column} onChange={handleChange}>
