@@ -5,15 +5,29 @@ import { Event } from '@mui/icons-material';
 import { makeSafeForCSS } from '@util/convert';
 import { highlightPlayerMouseEnterHandler, highlightPlayerMouseLeaveHandler } from "@components/highlightCharacter";
 import { Fragment } from 'react';
+import { iconPath } from '../util/professions';
 
+//summaries={rankedOverall.slice(0,SummaryDisplayCount)} start={0} end={SummaryDisplayCount}  style="success" title={`Top ${SummaryDisplayCount} Players`}   />
+//summaries={rankedOverall.slice(-SummaryDisplayCount)}  start={rankedOverall.length- SummaryDisplayCount} end={} style="danger"  title={`Bottom ${SummaryDisplayCount} Players`}/>
+
+type Section = 'top'|'bottom';
 interface SummaryProps {
-    title: string;
     summaries: RankSummary[];
-    style: "success" | "warning" | "danger" | "info" | "default";
-    
+    section: Section;
+    count: number;
+    max: number;
+    style: "success" | "warning" | "danger" | "info" | "default";    
 }
 
 export default function SummaryComponent (props:SummaryProps) {
+
+    function sublist():RankSummary[] {
+        return props.section === 'top' ? props.summaries.slice(0, props.count) : props.summaries.slice(-props.count);
+    }
+
+    function summaryIndex( i:number ){
+        return 1 + (props.section === 'top' ? i : props.max - props.count + i);
+    }
 
     function applyStyleClasses() {
         switch( props.style ){
@@ -26,17 +40,24 @@ export default function SummaryComponent (props:SummaryProps) {
     }
 
     return( 
-        <div className={`flex flex-col align-center w-full mx-2 mb-2 rounded rounded-b-none px-2 ${applyStyleClasses()}`}>
-            <Typography align='center'>{props.title}</Typography>
+        <div className={`flex flex-col align-center mx-2 mb-2 rounded rounded-b-none px-2 ${applyStyleClasses()}`}>
+            <Typography align='center'>{`${props.section.charAt(0).toUpperCase()}${props.section.slice(1)} ${props.count} Players`}</Typography>
 
             <List dense={true} disablePadding>
-                {props.summaries.map( (summary,i)=>
-                    <ListItem key={i} dense={true} alignItems="flex-start" disablePadding>
-                        <ListItemText
-                            primary={
-                                <Stack component='span' direction='row' justifyContent={'space-between'}>
-                                    <Stack direction='row' gap={1}>
-                                        <Avatar sx={{ width: 32, height: 32, mt: 1}} alt={summary.player.characters.find( c => c)?.profession ?? 'Any'} src={`icons/${summary.player.characters.find( c => c)?.profession ?? 'Any'}.png`} />
+                {sublist().map( (summary:RankSummary,i:number) => {
+                    const player = summary.player;
+                    const character = player.characters.find( c => c.name === summary.name );
+
+                    return (
+                        <ListItem key={i} dense={true} alignItems="flex-start" disablePadding>
+                            <ListItemAvatar sx={{mt:3, mr:0}}>
+                                <Badge color="info" badgeContent={ summaryIndex(i)  }>
+                                    <Avatar sx={{ width: 32, height: 32}} alt={character?.profession.name ?? 'Default'} src={ iconPath(character) } />
+                                </Badge>
+                            </ListItemAvatar>
+                            <ListItemText
+                                primary={<Stack component='span' direction='row' justifyContent={'space-between'}>
+                                    <Stack direction='row' gap={2}>
                                         <Stack component='span' direction='column'>
                                             <Typography variant='body2' className={makeSafeForCSS(summary.name, 'player')} 
                                                 onMouseEnter={highlightPlayerMouseEnterHandler}
@@ -48,18 +69,16 @@ export default function SummaryComponent (props:SummaryProps) {
                                             </Typography>
                                         </Stack>
                                     </Stack>
-                                </Stack>
-                            }
-                            secondary={
-                                <Stack component='span' direction='row' gap={1} justifyContent='space-between'  sx={{ pr: 1}}>
-                                    <Chip component={'span'} size='small' variant="outlined" label={`Avg Rank ${(summary.ranks.reduce( (acc,cur) => acc + cur) / summary.count).toFixed(2)}`} />
-                                    <Badge color="info" badgeContent={summary.count}>
-                                        <Event color='disabled'/>
-                                    </Badge>                                    
                                 </Stack>}
-                        />  
-                    </ListItem>
-                )}
+                                
+                                secondary={<Stack direction='row'>
+                                    <Chip component={'span'} size='small' variant="outlined" label={`Avg Rank ${(summary.ranks.reduce( (acc,cur) => acc + cur) / summary.count).toFixed(2)}`} />
+                                    <Chip component={'span'} size='small' variant="outlined" label={`Days ${summary.count}`} />
+                                </Stack>}
+                            />  
+                        </ListItem>
+                    );
+                })}
             </List>
         </div>);
 };

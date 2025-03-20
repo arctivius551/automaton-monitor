@@ -12,6 +12,7 @@ import SummaryComponent from '@components/SummaryComponent';
 import ReportDisplay from '@components/ReportDisplay';
 import HiddenInput from '@components/HiddenInput';
 import SheetSelector from '@components/SheetSelector';
+import Professions, { getProfession, iconPath} from '../util/professions';
 
 const SummaryDisplayCount = 5;
 const initMinimumDays = 2;
@@ -41,7 +42,7 @@ export default function Home() {
           }else{
             rankData.push( { name, player, ranks: [row[column]], count: 1 } as RankSummary)
           }
-      })
+      });
     });
     rankData = rankData.filter( rd => rd.count >= days);
     setRankedOverall(rankData);
@@ -67,7 +68,7 @@ export default function Home() {
 
           const id = row['Account'];
           const name = row['Name'];
-          const profession = row['Profession'];
+          const profession = getProfession(row['Profession']);
 
           const character = ({ name, id, profession } as Character);
 
@@ -168,22 +169,24 @@ export default function Home() {
           <article id="summary" className='flex flex-col h-full min-w-60 items-center border-r-black border-r-2 px-2'>
             <Typography variant='h4' className='w-fit text-xl'>Summary</Typography>
             {csvSheets && column && (<Fragment>
-              <Stack direction="row" alignItems="center" spacing={1} justifyContent={'space-between'}>
-                <Typography>Min Days</Typography>
-                <IconButton onClick={handleDecrement}> <ArrowLeft /> </IconButton>
-                <input type="number" value={days} onChange={handleMinNumberChange} min={1} max={ csvSheets.length }
-                  style={{ width: '50px', textAlign: 'center' }}
-                />
-                <IconButton onClick={handleIncrement}> <ArrowRight /> </IconButton>
-              </Stack>
-              <SummaryComponent summaries={rankedOverall.slice(0,SummaryDisplayCount)} style="success" title={`Top ${SummaryDisplayCount} Players`}   />
-              <SummaryComponent summaries={rankedOverall.slice(-SummaryDisplayCount)}  style="danger"  title={`Bottom ${SummaryDisplayCount} Players`}/>
+              
+              <SummaryComponent summaries={rankedOverall} count={SummaryDisplayCount} max={csvSheets.reduce((a,c) => Math.max(a, c.data.length),0)} section="top"    style="success" />
+              <SummaryComponent summaries={rankedOverall} count={SummaryDisplayCount} max={csvSheets.reduce((a,c) => Math.max(a, c.data.length),0)} section="bottom" style="danger" />
               
             </Fragment>)}
           </article>
 
           <article id="days" className='flex flex-col w-full h-full pl-2 bg-white'>
-            <ReportDisplay sheets={csvSheets} players={players} column={column} columnSelector={
+            <ReportDisplay sheets={csvSheets} players={players} column={column} days={
+              <Stack border={'black'} direction="row" alignItems="center" spacing={1} justifyContent={'space-between'}>
+                <Typography component='span'>Min Days</Typography>
+                <IconButton onClick={handleDecrement}> <ArrowLeft /> </IconButton>
+                <input type="number" value={days} onChange={handleMinNumberChange} min={1} max={ csvSheets.length }
+                 style={{ width: '50px', textAlign: 'center' }}
+                />
+              <IconButton onClick={handleIncrement}> <ArrowRight /> </IconButton>
+            </Stack>
+            } columnSelector={
               <FormControl fullWidth>
                   <InputLabel id="column-select-label">Column</InputLabel>
                   <Select labelId="column-select-label" id="column-select" className='w-80' value={column} onChange={handleChange}>

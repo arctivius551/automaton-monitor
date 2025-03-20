@@ -12,6 +12,7 @@ interface ReportDisplayProps {
     sheets: CsvSheet[];
     players: Player[];
     column: string;
+    days: ReactElement;
     columnSelector: ReactElement;
 }
 export default function ReportDisplay( props: ReportDisplayProps) {
@@ -28,6 +29,7 @@ export default function ReportDisplay( props: ReportDisplayProps) {
                 <Stack direction='column' className='w-1/2'>
                     <Typography variant='h4' className='text-xl w-full'>Report {sheets[0]?.name || "[No Report Selected]"}</Typography>
                 </Stack>
+                { sheets && sheets.length > 0 ? props.days : <Fragment/> }
                 { sheets && sheets.length > 0 ? props.columnSelector : <Fragment/> }
                 {/* <Stack direction='row' className='flex-wrap border border-orange-500'>
                     {Object.keys(ProfessionColors).map( c => <Chip label={c.charAt(0)} /> )}

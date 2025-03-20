@@ -3,9 +3,15 @@ interface Player {
   characters:Character[];
 }
 
+interface Profession{
+  name:string;
+  base:string;
+  type:string;
+}
+
 interface Character {
   name: string;
-  profession: string;
+  profession: Profession;
   id: string;
 }
 

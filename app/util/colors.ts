@@ -1,4 +1,5 @@
-export const ProfessionColors = {
+
+export const ProfessionColors: {[key: string]: any} = {
     Guardian     : "#72C1D9",
     Dragonhunter : "#72C1D9",
     Firebrand    : "#72C1D9",
@@ -42,8 +43,14 @@ export const ProfessionColors = {
     Necromancer  : "#52A76F",
     Reaper       : "#52A76F",
     Scourge      : "#52A76F",
-    Harbinger    : "#52A76F"
+    Harbinger    : "#52A76F",
+
+    Default      : "#888888"
 };
+
+export function colorFromProfession( profession:Profession):string {
+    return ProfessionColors[profession.name];
+}
 
 export function getProfessionColor( profession:string ):string {
     const prof = Object.entries(ProfessionColors).find( ([k,v]) => k === profession );
