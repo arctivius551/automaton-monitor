@@ -5,7 +5,7 @@ export const fetchCache = "force-no-store";
 
 import { ChangeEvent, Fragment, useEffect, useState } from 'react';
 import { WorkBook, WorkSheet, utils } from 'xlsx';
-import { Button, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, Typography} from '@mui/material';
+import { Avatar, Button, FormControl, IconButton, InputLabel, MenuItem, Select, SelectChangeEvent, Stack, ToggleButton, ToggleButtonGroup, Typography} from '@mui/material';
 import { CloudUpload, ArrowLeft, ArrowRight} from '@mui/icons-material';
 import { fileToWorkbook, dateStrToUnix } from '@util/convert';
 import SummaryComponent from '@components/SummaryComponent';
@@ -16,6 +16,7 @@ import Professions, { getProfession, iconPath} from '../util/professions';
 
 const SummaryDisplayCount = 5;
 const initMinimumDays = 2;
+const CoreProfessions = Object.values(Professions).filter( (p:Profession) => p.name === p.base );
 
 export default function Home() {
 
@@ -27,6 +28,7 @@ export default function Home() {
   const [columns, setColumns]             = useState([] as string[]);
   const [column, setColumn]               = useState('');
   const [days, setDays]                   = useState(initMinimumDays);
+  const [filters, setFilters]             = useState(CoreProfessions.map( p => p.name));
 
   //Update the Summary Values on selecting new data set or 
   useEffect(()=>{
@@ -36,17 +38,18 @@ export default function Home() {
           const name = row.Name;
           let summary = rankData.find( s => s.name === name );
           const player = players.find( p => p.characters.find( c => c.name === name ));
+          const character = player?.characters.find( c => c.name === name);
           if( summary ){
             summary.ranks.push( row[column] );
             summary.count += 1;
           }else{
-            rankData.push( { name, player, ranks: [row[column]], count: 1 } as RankSummary)
+            rankData.push( { name, player, character, ranks: [row[column]], count: 1 } as RankSummary);
           }
       });
     });
-    rankData = rankData.filter( rd => rd.count >= days);
+    rankData = rankData.filter( rd => rd.count >= days).filter( rd => filters.includes( rd.character.profession.base ));
     setRankedOverall(rankData);
-  }, [csvSheets, days, column, players]);
+  }, [csvSheets, days, column, players, filters]);
 
   //Update the columns in the select
   useEffect(()=>{
@@ -84,11 +87,10 @@ export default function Home() {
           }
         });
       });
-      
       setPlayers( players );
 
     }
-  }, [workbooks] );
+  }, [workbooks, filters] );
 
   function loadSheetData( sheetName:string ) {
     const loaded = workbooks.map( (wb:WorkBook) =>{
@@ -154,6 +156,8 @@ export default function Home() {
     }
   };
 
+  const toggleFilterMouseEnterHandler = ( event: React.MouseEvent<HTMLElement>, newFilters: string[] ) => { console.log( newFilters);setFilters(newFilters);};
+
   return (
     <main className="flex flex-row w-full h-lvh p-1 bg-slate-300">
       <aside id="controls" className='flex flex-col gap-2 pr-2 border-r-4 border-r-black min-w-72'>
@@ -166,33 +170,54 @@ export default function Home() {
       <section className='w-full h-full'>
         <div className='flex flex-row h-full w-full'>
 
-          <article id="summary" className='flex flex-col h-full min-w-60 items-center border-r-black border-r-2 px-2'>
+          <article id="summary" className='flex flex-col h-full w-60 items-center border-r-black border-r-2 px-2'>
             <Typography variant='h4' className='w-fit text-xl'>Summary</Typography>
             {csvSheets && column && (<Fragment>
-              
-              <SummaryComponent summaries={rankedOverall} count={SummaryDisplayCount} max={csvSheets.reduce((a,c) => Math.max(a, c.data.length),0)} section="top"    style="success" />
-              <SummaryComponent summaries={rankedOverall} count={SummaryDisplayCount} max={csvSheets.reduce((a,c) => Math.max(a, c.data.length),0)} section="bottom" style="danger" />
+              <Stack border={'black'} direction="row" alignItems="center" spacing={1} justifyContent={'space-between'}>
+                  <Typography component='span'>Min Days</Typography>
+                    <IconButton onClick={handleDecrement}> <ArrowLeft /> </IconButton>
+                    <input type="number" value={days} onChange={handleMinNumberChange} min={1} max={ csvSheets.length }
+                      style={{ width: '50px', textAlign: 'center' }}
+                    />
+                  <IconButton onClick={handleIncrement}> <ArrowRight /> </IconButton>
+                </Stack>
+              <SummaryComponent summaries={rankedOverall} count={SummaryDisplayCount} section="top"    style="success" />
+              <SummaryComponent summaries={rankedOverall} count={SummaryDisplayCount} section="bottom" style="danger" />
               
             </Fragment>)}
           </article>
 
-          <article id="days" className='flex flex-col w-full h-full pl-2 bg-white'>
-            <ReportDisplay sheets={csvSheets} players={players} column={column} days={
-              <Stack border={'black'} direction="row" alignItems="center" spacing={1} justifyContent={'space-between'}>
-                <Typography component='span'>Min Days</Typography>
-                <IconButton onClick={handleDecrement}> <ArrowLeft /> </IconButton>
-                <input type="number" value={days} onChange={handleMinNumberChange} min={1} max={ csvSheets.length }
-                 style={{ width: '50px', textAlign: 'center' }}
-                />
-              <IconButton onClick={handleIncrement}> <ArrowRight /> </IconButton>
-            </Stack>
-            } columnSelector={
-              <FormControl fullWidth>
+          <article id="days" className="flex flex-col w-full pl-2 bg-white overflow-y-clip overflow-x-auto">
+            <ReportDisplay sheets={csvSheets} players={players} column={column} filters={filters}
+              
+              
+
+              columnSelector={
+                <FormControl>
                   <InputLabel id="column-select-label">Column</InputLabel>
                   <Select labelId="column-select-label" id="column-select" className='w-80' value={column} onChange={handleChange}>
-                      {columns.map((col,id) => <MenuItem key={id} value={col}>{col}</MenuItem> )}
+                    {columns.map((col,id) => <MenuItem key={id} value={col}>{col}</MenuItem> )}
                   </Select>
-              </FormControl>}/>
+                </FormControl>}
+              
+              filterElement={
+                  <ToggleButtonGroup value={filters} onChange={toggleFilterMouseEnterHandler} aria-label='Profession Filters'>
+                    {CoreProfessions.map( prof =>
+                      <ToggleButton key={`toggle-button-${prof.name}`} value={prof.name} aria-label={prof.name}>
+                        <Avatar key={prof.name} sx={{ width: 32, height: 32 }} alt={prof.name ?? 'Default'} src={iconPath(prof)} />
+                      </ToggleButton>
+                  )}
+                  </ToggleButtonGroup> 
+
+                // <Stack direction='row'>
+                //   {Object.values(Professions).filter( (p:Profession) => p.name === p.base ).map( prof =>{
+                //     return <><IconButton aria-label="delete">
+                //       <Avatar key={prof.name} sx={{ width: 32, height: 32 }} alt={prof.name ?? 'Default'} src={iconPath(prof)} />
+                //     </IconButton></>
+                //   })}
+                // </Stack>
+              }
+              />
           </article>
         </div>
       </section>

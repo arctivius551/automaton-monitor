@@ -1,7 +1,7 @@
 "use client";
 
 import { Clear, Star } from "@mui/icons-material";
-import { Stack, Typography, Button, IconButton, ThemeProvider, createTheme, styled } from "@mui/material";
+import { Stack, Typography, Button, IconButton, ThemeProvider, createTheme, styled, Divider } from "@mui/material";
 import { yellow } from "@mui/material/colors";
 import React, { useState, useEffect } from "react";
 
@@ -48,32 +48,33 @@ export default function SheetSelector( props: SheetSelectorProps) {
     }
 
     return <ThemeProvider theme={favoriteTheme}>
-        <Stack spacing={1} direction='column' className='overflow-y-scroll'>
+        <Stack spacing={1} direction='column' className='overflow-y-auto'>
+            { favorites && favorites.length > 0 && <Divider>Favorites</Divider> }
             { sheetNames && sheetNames.length > 0 && favorites && favorites.map( (f,i) =>{
                 return <Stack direction={'row'} key={i}>
-                <IconButton data-name={f} onClick={toggleFavorite} color={ favorites.includes(f) ? 'primary' : 'default' } aria-label="delete">
-                    <StyledClear /> 
-                </IconButton>
-                <Button data-name={f} key={i} variant='contained' color='primary' size='small' className='w-full over' onClick={props.sheetButtonClickHandler} sx={{
-                        marginX: '10px',
-                        overflowWrap: 'anywhere'
-                    }}>
-                    <Typography variant='subtitle1'>{f}</Typography>
-                </Button>
+                    <IconButton data-name={f} onClick={toggleFavorite} color={ favorites.includes(f) ? 'primary' : 'default' } aria-label={`Favorite Sheet Select Button - ${f}`}>
+                        <StyledClear /> 
+                    </IconButton>
+                    <Button data-name={f} key={i} variant='contained' color='primary' size='small' className='w-full' onClick={props.sheetButtonClickHandler} sx={{
+                            marginRight: '20px',
+                            overflowWrap: 'anywhere'
+                        }}>
+                        <Typography variant='subtitle1'>{f}</Typography>
+                    </Button>
                 </Stack>
             })}
-            <hr />
+            { sheetNames && sheetNames.length > 0 &&  <Divider>Reports</Divider> }
             { sheetNames && sheetNames.map( (sn,i) =>{
                 return <Stack direction={'row'} key={sn}>
-                    <IconButton data-name={sn} onClick={toggleFavorite} color={ (favorites || []).includes(sn) ? 'primary' : 'default' } aria-label="delete">
+                    <IconButton data-name={sn} onClick={toggleFavorite} color={ (favorites || []).includes(sn) ? 'primary' : 'default' } aria-label={`Sheet Select Button - ${sn}`}>
                         <StyledStarIcon />
                     </IconButton>
-                <Button data-name={sn} key={i} variant='contained' color='secondary' size='small' className="w-full" onClick={props.sheetButtonClickHandler} sx={{
-                        marginRight: '20px',
-                        overflowWrap: 'anywhere'
-                    }}>
-                    <Typography variant="body2">{sn}</Typography>
-                </Button>
+                    <Button data-name={sn} key={i} variant='contained' color='secondary' size='small' className="w-full" onClick={props.sheetButtonClickHandler} sx={{
+                            marginRight: '20px',
+                            overflowWrap: 'anywhere'
+                        }}>
+                        <Typography variant="body2">{sn}</Typography>
+                    </Button>
                 </Stack>
             })}
         </Stack>

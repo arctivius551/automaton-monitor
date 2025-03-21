@@ -30,7 +30,8 @@ interface CsvSheet {
 
 interface RankSummary {
     name:string;
-    player:Player
+    player:Player;
+    character:Character;
     ranks:number[];
     count:number;
   }

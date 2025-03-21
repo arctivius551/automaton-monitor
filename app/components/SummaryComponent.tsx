@@ -1,21 +1,15 @@
 "use client";
 
-import { Chip, List, ListItem, ListItemText, Typography, Stack, Avatar, Badge, Box, ListItemAvatar, Divider } from '@mui/material';
-import { Event } from '@mui/icons-material';
-import { makeSafeForCSS } from '@util/convert';
+import { Chip, List, ListItem, ListItemText, Typography, Stack, Avatar, Badge, ListItemAvatar } from '@mui/material';
 import { highlightPlayerMouseEnterHandler, highlightPlayerMouseLeaveHandler } from "@components/highlightCharacter";
-import { Fragment } from 'react';
-import { iconPath } from '../util/professions';
-
-//summaries={rankedOverall.slice(0,SummaryDisplayCount)} start={0} end={SummaryDisplayCount}  style="success" title={`Top ${SummaryDisplayCount} Players`}   />
-//summaries={rankedOverall.slice(-SummaryDisplayCount)}  start={rankedOverall.length- SummaryDisplayCount} end={} style="danger"  title={`Bottom ${SummaryDisplayCount} Players`}/>
+import { makeSafeForCSS } from '@util/convert';
+import { iconPath } from '@util/professions';
 
 type Section = 'top'|'bottom';
 interface SummaryProps {
     summaries: RankSummary[];
     section: Section;
     count: number;
-    max: number;
     style: "success" | "warning" | "danger" | "info" | "default";    
 }
 
@@ -26,7 +20,7 @@ export default function SummaryComponent (props:SummaryProps) {
     }
 
     function summaryIndex( i:number ){
-        return 1 + (props.section === 'top' ? i : props.max - props.count + i);
+        return 1 + (props.section === 'top' ? i : Math.max(props.summaries.length, props.count) - props.count + i);
     }
 
     function applyStyleClasses() {
@@ -40,7 +34,7 @@ export default function SummaryComponent (props:SummaryProps) {
     }
 
     return( 
-        <div className={`flex flex-col align-center mx-2 mb-2 rounded rounded-b-none px-2 ${applyStyleClasses()}`}>
+        <div className={`flex flex-col align-center mx-2 mb-2 rounded rounded-b-none px-1 ${applyStyleClasses()}`}>
             <Typography align='center'>{`${props.section.charAt(0).toUpperCase()}${props.section.slice(1)} ${props.count} Players`}</Typography>
 
             <List dense={true} disablePadding>
@@ -59,7 +53,7 @@ export default function SummaryComponent (props:SummaryProps) {
                                 primary={<Stack component='span' direction='row' justifyContent={'space-between'}>
                                     <Stack direction='row' gap={2}>
                                         <Stack component='span' direction='column'>
-                                            <Typography variant='body2' className={makeSafeForCSS(summary.name, 'player')} 
+                                            <Typography component='span' variant='body2' className={makeSafeForCSS(summary.name, 'player')} 
                                                 onMouseEnter={highlightPlayerMouseEnterHandler}
                                                 onMouseLeave={highlightPlayerMouseLeaveHandler}>
                                                     {summary.name}
@@ -71,7 +65,7 @@ export default function SummaryComponent (props:SummaryProps) {
                                     </Stack>
                                 </Stack>}
                                 
-                                secondary={<Stack direction='row'>
+                                secondary={<Stack direction='row' component={'span'}>
                                     <Chip component={'span'} size='small' variant="outlined" label={`Avg Rank ${(summary.ranks.reduce( (acc,cur) => acc + cur) / summary.count).toFixed(2)}`} />
                                     <Chip component={'span'} size='small' variant="outlined" label={`Days ${summary.count}`} />
                                 </Stack>}
